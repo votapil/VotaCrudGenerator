@@ -100,7 +100,7 @@ class CrudGenerateCommand extends Command
         }
 
         $this->newLine();
-        $this->info('✅ CRUD generation complete for ' . $name . '!');
+        $this->info('✅ CRUD generation complete for '.$name.'!');
 
         return self::SUCCESS;
     }
@@ -165,7 +165,7 @@ class CrudGenerateCommand extends Command
 
             $storeRules[$col['name']] = $rule;
             // Update rules: prefix with 'sometimes'
-            $updateRules[$col['name']] = 'sometimes|' . $rule;
+            $updateRules[$col['name']] = 'sometimes|'.$rule;
         }
 
         // Faker fields for factory
@@ -180,19 +180,19 @@ class CrudGenerateCommand extends Command
         // Namespace resolution
         $baseModelNs = $this->option('namespace')
             ?: ($config['namespaces']['model'] ?? 'App\\Models');
-        $subPath = $path ? '\\' . str_replace('/', '\\', $path) : '';
+        $subPath = $path ? '\\'.str_replace('/', '\\', $path) : '';
 
-        $modelNamespace = $baseModelNs . $subPath;
-        $modelFullClass = $modelNamespace . '\\' . $name;
+        $modelNamespace = $baseModelNs.$subPath;
+        $modelFullClass = $modelNamespace.'\\'.$name;
 
         $baseControllerNs = $config['namespaces']['controller'] ?? 'App\\Http\\Controllers';
-        $controllerNamespace = $baseControllerNs . $subPath;
+        $controllerNamespace = $baseControllerNs.$subPath;
 
         $baseRequestNs = $config['namespaces']['request'] ?? 'App\\Http\\Requests';
-        $requestNamespace = $baseRequestNs . $subPath;
+        $requestNamespace = $baseRequestNs.$subPath;
 
         $baseResourceNs = $config['namespaces']['resource'] ?? 'App\\Http\\Resources';
-        $resourceNamespace = $baseResourceNs . $subPath;
+        $resourceNamespace = $baseResourceNs.$subPath;
 
         $basePolicyNs = $config['namespaces']['policy'] ?? 'App\\Policies';
         $policyNamespace = $basePolicyNs;
@@ -201,46 +201,46 @@ class CrudGenerateCommand extends Command
         $modelPluralLower = Str::lower(Str::plural($name));
 
         return [
-            'modelName'          => $name,
-            'tableName'          => $tableName,
-            'path'               => $path,
+            'modelName' => $name,
+            'tableName' => $tableName,
+            'path' => $path,
 
             // Namespaces
-            'modelNamespace'     => $modelNamespace,
-            'modelFullClass'     => $modelFullClass,
+            'modelNamespace' => $modelNamespace,
+            'modelFullClass' => $modelFullClass,
             'controllerNamespace' => $controllerNamespace,
-            'requestNamespace'   => $requestNamespace,
-            'resourceNamespace'  => $resourceNamespace,
-            'policyNamespace'    => $policyNamespace,
+            'requestNamespace' => $requestNamespace,
+            'resourceNamespace' => $resourceNamespace,
+            'policyNamespace' => $policyNamespace,
 
             // Resource & Request full classes (for controller imports)
-            'resourceFullClass'      => $resourceNamespace . '\\' . $name . 'Resource',
-            'storeRequestFullClass'  => $requestNamespace . '\\' . $name . 'StoreRequest',
-            'updateRequestFullClass' => $requestNamespace . '\\' . $name . 'UpdateRequest',
+            'resourceFullClass' => $resourceNamespace.'\\'.$name.'Resource',
+            'storeRequestFullClass' => $requestNamespace.'\\'.$name.'StoreRequest',
+            'updateRequestFullClass' => $requestNamespace.'\\'.$name.'UpdateRequest',
 
             // Variables
-            'modelVariable'      => $modelVariable,
-            'modelPluralLower'   => $modelPluralLower,
+            'modelVariable' => $modelVariable,
+            'modelPluralLower' => $modelPluralLower,
 
             // Schema data
-            'columns'            => $columns,
-            'fillableNames'      => $fillableNames,
-            'uniqueColumns'      => $uniqueColumns,
+            'columns' => $columns,
+            'fillableNames' => $fillableNames,
+            'uniqueColumns' => $uniqueColumns,
 
             // Detections
-            'softDeletes'        => $hasSoftDeletes,
-            'hasTimestamps'      => $hasTimestamps,
-            'belongsTo'          => $belongsTo,
-            'hasMany'            => $hasMany,
-            'hasRelationships'   => count($belongsTo) > 0 || count($hasMany) > 0,
-            'casts'              => $casts,
+            'softDeletes' => $hasSoftDeletes,
+            'hasTimestamps' => $hasTimestamps,
+            'belongsTo' => $belongsTo,
+            'hasMany' => $hasMany,
+            'hasRelationships' => count($belongsTo) > 0 || count($hasMany) > 0,
+            'casts' => $casts,
 
             // Rules
-            'storeRules'         => $storeRules,
-            'updateRules'        => $updateRules,
+            'storeRules' => $storeRules,
+            'updateRules' => $updateRules,
 
             // Factory
-            'fakerFields'        => $fakerFields,
+            'fakerFields' => $fakerFields,
         ];
     }
 
@@ -252,7 +252,7 @@ class CrudGenerateCommand extends Command
         $this->newLine();
         $this->line("<fg=cyan>📋 Model:</> {$meta['modelFullClass']}");
         $this->line("<fg=cyan>📦 Table:</> {$meta['tableName']}");
-        $this->line("<fg=cyan>📝 Fillable fields:</> " . implode(', ', $meta['fillableNames']));
+        $this->line('<fg=cyan>📝 Fillable fields:</> '.implode(', ', $meta['fillableNames']));
 
         if ($meta['softDeletes']) {
             $this->line('<fg=yellow>♻️  SoftDeletes:</> detected (deleted_at column found)');
@@ -273,7 +273,7 @@ class CrudGenerateCommand extends Command
         }
 
         if (count($meta['casts']) > 0) {
-            $this->line('<fg=magenta>🎯 Casts:</> ' . implode(', ', array_map(
+            $this->line('<fg=magenta>🎯 Casts:</> '.implode(', ', array_map(
                 fn ($k, $v) => "{$k} → {$v}",
                 array_keys($meta['casts']),
                 $meta['casts']
@@ -297,13 +297,13 @@ class CrudGenerateCommand extends Command
         $relationshipsStr = $this->buildRelationshipsCode($meta);
 
         $content = $this->renderer->render('Model', [
-            'modelNamespace'  => $meta['modelNamespace'],
-            'modelName'       => $meta['modelName'],
-            'fillable'        => $fillableStr,
-            'casts'           => $castsStr,
-            'softDeletes'     => $meta['softDeletes'],
+            'modelNamespace' => $meta['modelNamespace'],
+            'modelName' => $meta['modelName'],
+            'fillable' => $fillableStr,
+            'casts' => $castsStr,
+            'softDeletes' => $meta['softDeletes'],
             'hasRelationships' => $meta['hasRelationships'],
-            'relationships'   => $relationshipsStr,
+            'relationships' => $relationshipsStr,
         ]);
 
         $filePath = $this->namespacePath($meta['modelNamespace'], $meta['modelName']);
@@ -313,18 +313,18 @@ class CrudGenerateCommand extends Command
     protected function generateController(array $meta, bool $force): void
     {
         $content = $this->renderer->render('Controller', [
-            'controllerNamespace'    => $meta['controllerNamespace'],
-            'modelName'              => $meta['modelName'],
-            'modelVariable'          => $meta['modelVariable'],
-            'modelFullClass'         => $meta['modelFullClass'],
-            'resourceFullClass'      => $meta['resourceFullClass'],
-            'storeRequestFullClass'  => $meta['storeRequestFullClass'],
+            'controllerNamespace' => $meta['controllerNamespace'],
+            'modelName' => $meta['modelName'],
+            'modelVariable' => $meta['modelVariable'],
+            'modelFullClass' => $meta['modelFullClass'],
+            'resourceFullClass' => $meta['resourceFullClass'],
+            'storeRequestFullClass' => $meta['storeRequestFullClass'],
             'updateRequestFullClass' => $meta['updateRequestFullClass'],
-            'softDeletes'            => $meta['softDeletes'],
-            'hasRelationships'       => $meta['hasRelationships'],
+            'softDeletes' => $meta['softDeletes'],
+            'hasRelationships' => $meta['hasRelationships'],
         ]);
 
-        $filePath = $this->namespacePath($meta['controllerNamespace'], $meta['modelName'] . 'Controller');
+        $filePath = $this->namespacePath($meta['controllerNamespace'], $meta['modelName'].'Controller');
         $this->writeFile($filePath, $content, $force, 'Controller');
     }
 
@@ -332,7 +332,7 @@ class CrudGenerateCommand extends Command
     {
         $stubName = $type === 'Store' ? 'StoreRequest' : 'UpdateRequest';
         $rules = $type === 'Store' ? $meta['storeRules'] : $meta['updateRules'];
-        $className = $meta['modelName'] . $type . 'Request';
+        $className = $meta['modelName'].$type.'Request';
 
         $rulesStr = $this->formatAssocArrayMultiline(
             array_map(fn ($rule) => "'{$rule}'", $rules),
@@ -342,8 +342,8 @@ class CrudGenerateCommand extends Command
 
         $content = $this->renderer->render($stubName, [
             'requestNamespace' => $meta['requestNamespace'],
-            'modelName'        => $meta['modelName'],
-            'validationRules'  => $rulesStr,
+            'modelName' => $meta['modelName'],
+            'validationRules' => $rulesStr,
         ]);
 
         $filePath = $this->namespacePath($meta['requestNamespace'], $className);
@@ -354,18 +354,18 @@ class CrudGenerateCommand extends Command
     {
         $fields = [];
         foreach ($meta['columns'] as $col) {
-            $fields[$col['name']] = '$this->' . $col['name'];
+            $fields[$col['name']] = '$this->'.$col['name'];
         }
 
         $fieldsStr = $this->formatAssocArrayMultiline($fields, 12, false);
 
         $content = $this->renderer->render('Resource', [
             'resourceNamespace' => $meta['resourceNamespace'],
-            'modelName'         => $meta['modelName'],
-            'resourceFields'    => $fieldsStr,
+            'modelName' => $meta['modelName'],
+            'resourceFields' => $fieldsStr,
         ]);
 
-        $filePath = $this->namespacePath($meta['resourceNamespace'], $meta['modelName'] . 'Resource');
+        $filePath = $this->namespacePath($meta['resourceNamespace'], $meta['modelName'].'Resource');
         $this->writeFile($filePath, $content, $force, 'Resource');
     }
 
@@ -378,13 +378,13 @@ class CrudGenerateCommand extends Command
 
         $content = $this->renderer->render('Policy', [
             'policyNamespace' => $meta['policyNamespace'],
-            'modelName'       => $meta['modelName'],
-            'modelFullClass'  => $meta['modelFullClass'],
-            'modelVariable'   => $policyModelVar,
-            'softDeletes'     => $meta['softDeletes'],
+            'modelName' => $meta['modelName'],
+            'modelFullClass' => $meta['modelFullClass'],
+            'modelVariable' => $policyModelVar,
+            'softDeletes' => $meta['softDeletes'],
         ]);
 
-        $filePath = $this->namespacePath($meta['policyNamespace'], $meta['modelName'] . 'Policy');
+        $filePath = $this->namespacePath($meta['policyNamespace'], $meta['modelName'].'Policy');
         $this->writeFile($filePath, $content, $force, 'Policy');
     }
 
@@ -398,11 +398,11 @@ class CrudGenerateCommand extends Command
 
         $content = $this->renderer->render('Factory', [
             'modelFullClass' => $meta['modelFullClass'],
-            'modelName'      => $meta['modelName'],
-            'factoryFields'  => $fakerStr,
+            'modelName' => $meta['modelName'],
+            'factoryFields' => $fakerStr,
         ]);
 
-        $filePath = database_path('factories/' . $meta['modelName'] . 'Factory.php');
+        $filePath = database_path('factories/'.$meta['modelName'].'Factory.php');
         $this->writeFile($filePath, $content, $force, 'Factory');
     }
 
@@ -412,10 +412,10 @@ class CrudGenerateCommand extends Command
         $prefix = config('votacrudgenerator.route_prefix', '');
 
         $routeName = $prefix
-            ? $prefix . '/' . $meta['modelPluralLower']
+            ? $prefix.'/'.$meta['modelPluralLower']
             : $meta['modelPluralLower'];
 
-        $controllerClass = $meta['controllerNamespace'] . '\\' . $meta['modelName'] . 'Controller';
+        $controllerClass = $meta['controllerNamespace'].'\\'.$meta['modelName'].'Controller';
 
         $routeLine = "\nRoute::apiResource('{$routeName}', \\{$controllerClass}::class);";
 
@@ -439,7 +439,7 @@ class CrudGenerateCommand extends Command
             return;
         }
 
-        File::append($routeFile, "\n" . $routeLine . "\n");
+        File::append($routeFile, "\n".$routeLine."\n");
         $this->info("📌 Route added to {$routeFile}");
     }
 
@@ -490,9 +490,9 @@ PHP;
 
         // Remove leading App/ and convert to app/
         if (str_starts_with($relative, 'App/')) {
-            $relative = 'app/' . substr($relative, 4);
+            $relative = 'app/'.substr($relative, 4);
         } elseif (str_starts_with($relative, 'Database/')) {
-            $relative = 'database/' . substr($relative, 9);
+            $relative = 'database/'.substr($relative, 9);
         }
 
         return base_path("{$relative}/{$className}.php");
@@ -530,7 +530,7 @@ PHP;
         $pad = str_repeat(' ', $indent);
         $lines = array_map(fn ($item) => "{$pad}'{$item}',", $items);
 
-        return "[\n" . implode("\n", $lines) . "\n" . str_repeat(' ', $indent - 4) . ']';
+        return "[\n".implode("\n", $lines)."\n".str_repeat(' ', $indent - 4).']';
     }
 
     /**
@@ -550,6 +550,6 @@ PHP;
             $lines[] = "{$pad}'{$key}' => {$val},";
         }
 
-        return "[\n" . implode("\n", $lines) . "\n" . str_repeat(' ', $indent - 4) . ']';
+        return "[\n".implode("\n", $lines)."\n".str_repeat(' ', $indent - 4).']';
     }
 }
