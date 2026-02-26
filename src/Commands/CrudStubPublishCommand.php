@@ -46,7 +46,8 @@ class CrudStubPublishCommand extends Command
         }
 
         $this->newLine();
-        $this->info("🎉 {$count = count($published)} stub(s) published to: {$destination}");
+        $count = count($published);
+        $this->info("🎉 {$count} stub(s) published to: {$destination}");
         $this->line('You can now customize these stubs to match your project style.');
 
         return self::SUCCESS;

@@ -67,7 +67,9 @@ class CrudGenerateCommand extends Command
         // Generate files
         $config = config('votacrudgenerator.generate', []);
 
-        $this->generateModel($meta, $force);
+        if ($config['model'] ?? true) {
+            $this->generateModel($meta, $force);
+        }
 
         if (($config['controller'] ?? true)) {
             $this->generateController($meta, $force);
