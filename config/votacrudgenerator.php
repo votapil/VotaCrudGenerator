@@ -13,12 +13,12 @@ return [
     |
     */
     'namespaces' => [
-        'model'      => 'App\\Models',
+        'model' => 'App\\Models',
         'controller' => 'App\\Http\\Controllers',
-        'request'    => 'App\\Http\\Requests',
-        'resource'   => 'App\\Http\\Resources',
-        'policy'     => 'App\\Policies',
-        'factory'    => 'Database\\Factories',
+        'request' => 'App\\Http\\Requests',
+        'resource' => 'App\\Http\\Resources',
+        'policy' => 'App\\Policies',
+        'factory' => 'Database\\Factories',
     ],
 
     /*
@@ -31,14 +31,14 @@ return [
     |
     */
     'generate' => [
-        'model'          => true,
-        'controller'     => true,
-        'store_request'  => true,
+        'model' => true,
+        'controller' => true,
+        'store_request' => true,
         'update_request' => true,
-        'resource'       => true,
-        'policy'         => true,
-        'factory'        => true,
-        'routes'         => true,
+        'resource' => true,
+        'policy' => true,
+        'factory' => true,
+        'routes' => true,
     ],
 
     /*
@@ -51,10 +51,10 @@ return [
     |
     */
     'detect' => [
-        'soft_deletes'  => true,
-        'timestamps'    => true,
+        'soft_deletes' => true,
+        'timestamps' => true,
         'relationships' => true,
-        'casts'         => true,
+        'casts' => true,
     ],
 
     /*
@@ -62,7 +62,7 @@ return [
     | Route Configuration
     |--------------------------------------------------------------------------
     */
-    'route_file'   => 'routes/api.php',
+    'route_file' => 'routes/api.php',
     'route_prefix' => '',
 
     /*
