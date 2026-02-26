@@ -371,11 +371,16 @@ class CrudGenerateCommand extends Command
 
     protected function generatePolicy(array $meta, bool $force): void
     {
+        // Avoid duplicate parameter name when model is User (User $user, User $user)
+        $policyModelVar = $meta['modelVariable'] === 'user'
+            ? 'model'
+            : $meta['modelVariable'];
+
         $content = $this->renderer->render('Policy', [
             'policyNamespace' => $meta['policyNamespace'],
             'modelName'       => $meta['modelName'],
             'modelFullClass'  => $meta['modelFullClass'],
-            'modelVariable'   => $meta['modelVariable'],
+            'modelVariable'   => $policyModelVar,
             'softDeletes'     => $meta['softDeletes'],
         ]);
 

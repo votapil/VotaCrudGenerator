@@ -34,6 +34,8 @@ This creates:
 - `database/factories/PostFactory.php` — smart faker
 - Route added to `routes/api.php`
 
+> **Note:** Laravel 11+ does not include `routes/api.php` by default. Run `php artisan install:api` first to enable API routing, then use the generator.
+
 ## Usage
 
 ```bash
@@ -161,6 +163,8 @@ Route::apiResource('posts', \App\Http\Controllers\PostController::class);
 // + restore/forceDestroy routes when SoftDeletes detected
 ```
 
+> **Note:** Laravel 11+ requires `php artisan install:api` before `routes/api.php` exists. If the file is missing, the generator prints the route snippet to the console instead of failing.
+
 ---
 
 ## Customization Guide
@@ -234,7 +238,7 @@ Works with any Laravel-supported driver via the `Schema` facade:
 
 ## Requirements
 
-- PHP 8.4+
+- PHP 8.3+
 - Laravel 11.x or 12.x
 - Existing database with tables
 
