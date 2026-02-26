@@ -1,0 +1,34 @@
+<?php
+
+namespace {{ modelNamespace }};
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+{{#if softDeletes}}
+use Illuminate\Database\Eloquent\SoftDeletes;
+{{/if softDeletes}}
+{{#if hasRelationships}}
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+{{/if hasRelationships}}
+
+class {{ modelName }} extends Model
+{
+    use HasFactory;
+{{#if softDeletes}}
+    use SoftDeletes;
+{{/if softDeletes}}
+
+    protected $fillable = {{ fillable }};
+{{#if casts}}
+
+    protected function casts(): array
+    {
+        return {{ casts }};
+    }
+{{/if casts}}
+{{#if relationships}}
+
+{{ relationships }}
+{{/if relationships}}
+}

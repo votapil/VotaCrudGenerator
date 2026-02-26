@@ -4,22 +4,25 @@ namespace Votapil\VotaCrudGenerator;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Votapil\VotaCrudGenerator\Commands\VotaCrudGeneratorCommand;
+use Votapil\VotaCrudGenerator\Commands\CrudGenerateCommand;
+use Votapil\VotaCrudGenerator\Commands\CrudStubPublishCommand;
 
 class VotaCrudGeneratorServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
     {
-        /*
-         * This class is a Package Service Provider
-         *
-         * More info: https://github.com/spatie/laravel-package-tools
-         */
         $package
             ->name('votacrudgenerator')
             ->hasConfigFile()
-            ->hasViews()
-            ->hasMigration('create_votacrudgenerator_table')
-            ->hasCommand(VotaCrudGeneratorCommand::class);
+            ->hasCommands([
+                CrudGenerateCommand::class,
+                CrudStubPublishCommand::class,
+            ]);
+    }
+
+    public function packageRegistered(): void
+    {
+        $this->app->singleton(Services\DatabaseIntrospector::class);
+        $this->app->singleton(Services\StubRenderer::class);
     }
 }

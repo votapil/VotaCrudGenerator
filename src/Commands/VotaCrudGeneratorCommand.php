@@ -1,19 +1,4 @@
 <?php
 
-namespace Votapil\VotaCrudGenerator\Commands;
-
-use Illuminate\Console\Command;
-
-class VotaCrudGeneratorCommand extends Command
-{
-    public $signature = 'votacrudgenerator';
-
-    public $description = 'My command';
-
-    public function handle(): int
-    {
-        $this->comment('All done');
-
-        return self::SUCCESS;
-    }
-}
+// This file is deprecated. The command has been replaced by CrudGenerateCommand.
+// You can safely delete this file.
