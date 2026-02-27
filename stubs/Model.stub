@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 {{/if hasRelationships}}
 
+{{ phpDoc }}
 class {{ modelName }} extends Model
 {
     use HasFactory;

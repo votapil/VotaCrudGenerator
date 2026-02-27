@@ -226,6 +226,28 @@ return [
 
 ---
 
+## 🤖 AI Skills / Cursor Rules
+
+If you use AI coding assistants like **Cursor**, **GitHub Copilot**, or **Antigravity**, you can train them to use `VotaCrudGenerator` instead of writing manual, error-prone CRUD boilerplate. 
+
+Because the generator extracts your **Database Column Comments** into Model PHPDocs and Resource fields, your AI will instantly understand the business context of every auto-generated field.
+
+Add the following block to your project's `.cursorrules`, GitHub Copilot instructions, or AI agent context (e.g., `skills/votacrud.md`):
+
+```markdown
+# Laravel CRUD Generation
+
+When asked to create a new CRUD, resource, or model with its related files:
+1. DO NOT write the Model, Controller, Requests, Resource, Policy, or Factory manually.
+2. Ask the user to create and run the database migration first. Ensure you add `->comment(...)` to the columns to provide business context.
+3. Once the database table is ready, use the VotaCrudGenerator package by running:
+   `php artisan vota:crud {ModelName}`
+4. The package will automatically introspect the database and generate all necessary files based on the concrete table schema (columns, types, foreign keys, soft deletes, and comments).
+5. Only make manual edits to the generated files if specific custom business logic is requested.
+```
+
+---
+
 ## Multi-Database Support
 
 Works with any Laravel-supported driver via the `Schema` facade:

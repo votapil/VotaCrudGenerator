@@ -296,9 +296,22 @@ class CrudGenerateCommand extends Command
 
         $relationshipsStr = $this->buildRelationshipsCode($meta);
 
+        // Generate PHPDoc properties
+        $phpDoc = "/**\n";
+        foreach ($meta['columns'] as $col) {
+            $type = $this->mapDbTypeToPhpType($col['type_name'] ?? $col['type'] ?? 'string');
+            if ($col['nullable'] ?? false) {
+                $type .= '|null';
+            }
+            $comment = !empty($col['comment']) ? ' ' . $col['comment'] : '';
+            $phpDoc .= " * @property {$type} \${$col['name']}{$comment}\n";
+        }
+        $phpDoc .= " */";
+
         $content = $this->renderer->render('Model', [
             'modelNamespace'  => $meta['modelNamespace'],
             'modelName'       => $meta['modelName'],
+            'phpDoc'          => $phpDoc,
             'fillable'        => $fillableStr,
             'casts'           => $castsStr,
             'softDeletes'     => $meta['softDeletes'],
@@ -352,12 +365,16 @@ class CrudGenerateCommand extends Command
 
     protected function generateResource(array $meta, bool $force): void
     {
-        $fields = [];
+        $lines = [];
         foreach ($meta['columns'] as $col) {
-            $fields[$col['name']] = '$this->' . $col['name'];
+            $line = "'{$col['name']}' => \$this->{$col['name']},";
+            if (!empty($col['comment'])) {
+                $line .= " // {$col['comment']}";
+            }
+            $lines[] = "            " . $line;
         }
 
-        $fieldsStr = $this->formatAssocArrayMultiline($fields, 12, false);
+        $fieldsStr = "[\n" . implode("\n", $lines) . "\n        ]";
 
         $content = $this->renderer->render('Resource', [
             'resourceNamespace' => $meta['resourceNamespace'],
@@ -478,6 +495,27 @@ PHP;
         }
 
         return rtrim($code);
+    }
+
+    /**
+     * Map a DB column type to a PHP type for PHPDoc.
+     */
+    protected function mapDbTypeToPhpType(string $typeName): string
+    {
+        $typeName = strtolower($typeName);
+
+        return match (true) {
+            str_contains($typeName, 'int') => 'int',
+            str_contains($typeName, 'decimal'),
+            str_contains($typeName, 'float'),
+            str_contains($typeName, 'double'),
+            str_contains($typeName, 'numeric') => 'float',
+            str_contains($typeName, 'bool') => 'bool',
+            str_contains($typeName, 'json') => 'array',
+            str_contains($typeName, 'date'),
+            str_contains($typeName, 'timestamp') => '\Illuminate\Support\Carbon',
+            default => 'string',
+        };
     }
 
     /**
