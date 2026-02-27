@@ -1,84 +1,269 @@
-# Generate CRUD from your databases
+# VotaCrudGenerator
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/votapil/votacrudgenerator.svg?style=flat-square)](https://packagist.org/packages/votapil/votacrudgenerator)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/votapil/votacrudgenerator/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/votapil/votacrudgenerator/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/votapil/votacrudgenerator/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/votapil/votacrudgenerator/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/votapil/votacrudgenerator.svg?style=flat-square)](https://packagist.org/packages/votapil/votacrudgenerator)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/VotaCrudGenerator.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/VotaCrudGenerator)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+**Generate production-ready CRUD scaffolding from your existing database tables** for Laravel 11 & 12. Introspects your DB schema and generates Models, API Controllers, FormRequests, Resources, Policies, and Factories — all following modern Laravel best practices.
 
 ## Installation
 
-You can install the package via composer:
-
 ```bash
-composer require votapil/votacrudgenerator
+composer require votapil/votacrudgenerator --dev
 ```
 
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="votacrudgenerator-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
+Publish the config (optional):
 
 ```bash
 php artisan vendor:publish --tag="votacrudgenerator-config"
 ```
 
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
+## Quick Start
 
 ```bash
-php artisan vendor:publish --tag="votacrudgenerator-views"
+# Generate full CRUD for the "posts" table
+php artisan vota:crud Post
 ```
+
+This creates:
+- `app/Models/Post.php` — with fillable, casts, SoftDeletes, relationships
+- `app/Http/Controllers/PostController.php` — API controller
+- `app/Http/Requests/PostStoreRequest.php` — validation from DB types
+- `app/Http/Requests/PostUpdateRequest.php` — partial update rules
+- `app/Http/Resources/PostResource.php` — JSON resource
+- `app/Policies/PostPolicy.php` — authorization
+- `database/factories/PostFactory.php` — smart faker
+- Route added to `routes/api.php`
+
+> **Note:** Laravel 11+ does not include `routes/api.php` by default. Run `php artisan install:api` first to enable API routing, then use the generator.
 
 ## Usage
 
-```php
-$votaCrudGenerator = new Votapil\VotaCrudGenerator();
-echo $votaCrudGenerator->echoPhrase('Hello, Votapil!');
+```bash
+php artisan vota:crud {ModelName} [options]
 ```
 
-## Testing
+Model name should be **singular PascalCase**. Table name is derived automatically (`Post` → `posts`, `BlogPost` → `blog_posts`).
+
+### Options
+
+| Option | Description | Example |
+|--------|-------------|---------|
+| `--path=` | Sub-path for namespace grouping | `--path=Blog` → `App\Models\Blog\Post` |
+| `--namespace=` | Override base model namespace | `--namespace="App\Models\Admin"` |
+| `--table=` | Explicit table name (skip convention) | `--table=wp_posts` |
+| `--no-policy` | Skip Policy generation | |
+| `--no-request` | Skip FormRequest generation | |
+| `--no-resource` | Skip Resource generation | |
+| `--no-factory` | Skip Factory generation | |
+| `--no-route` | Skip route injection | |
+| `--force` | Overwrite existing files | |
+
+### Examples
 
 ```bash
-composer test
+# Grouped namespace
+php artisan vota:crud Post --path=Blog
+
+# Custom namespace
+php artisan vota:crud Post --namespace="App\Models\Admin"
+
+# Non-standard table name
+php artisan vota:crud Post --table=legacy_blog_posts
+
+# Only Model + Controller
+php artisan vota:crud Post --no-policy --no-request --no-resource --no-factory --no-route
+
+# Regenerate (overwrite)
+php artisan vota:crud Post --force
 ```
 
-## Changelog
+### Customize Stubs
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+```bash
+php artisan vota:stubs
+```
 
-## Contributing
+Publishes stubs to `stubs/vendor/votacrud/` for editing. The generator uses your custom stubs when available.
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+---
 
-## Security Vulnerabilities
+## Why This Approach?
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+### Database-First Development
 
-## Credits
+Most CRUD generators work top-down: define fields in config, generate migrations. **VotaCrudGenerator works bottom-up**: your database is the single source of truth.
 
-- [votapil](https://github.com/votapil)
-- [All Contributors](../../contributors)
+This is powerful when:
+- Working with an **existing database** (legacy systems, shared DBs, DBA-designed schemas)
+- Preferring **migrations-first** workflow — scaffold _after_ the schema is ready
+- Onboarding onto a project — quickly scaffold models for dozens of tables
+
+### Smart Schema Analysis
+
+The generator doesn't just read column names — it understands your schema:
+
+| Detection | What Happens |
+|-----------|-------------|
+| `deleted_at` column | Adds `SoftDeletes` trait + `restore()` / `forceDelete()` endpoints |
+| Foreign key constraints | Auto-generates `belongsTo()` and `hasMany()` relationships |
+| Column types | Maps to `$casts`, validation rules, and Faker methods |
+| Unique indexes | Adds `unique` validation rule |
+| Nullable columns | `nullable` instead of `required` in validation |
+| Column names (email, phone…) | Picks appropriate Faker methods |
+
+### Advantages Over Manual Scaffolding
+
+- **Zero typos** — field names, types, relationships come directly from the DB
+- **Consistency** — every generated file follows the same conventions
+- **Speed** — scaffold a complete CRUD in seconds
+- **Best Practices** — typed returns, `validated()` over `$request->all()`, proper HTTP status codes
+- **Customizable** — publish and modify stubs to match your project style
+
+---
+
+## Generated Files in Detail
+
+### Model
+- `$fillable` from non-system columns
+- `casts()` method from column types (json → `array`, bool → `boolean`, etc.)
+- `SoftDeletes` trait when `deleted_at` detected
+- `belongsTo()` / `hasMany()` from foreign keys
+- `HasFactory` trait included
+
+### Controller (API)
+- RESTful: `index`, `store`, `show`, `update`, `destroy`
+- Uses `$request->validated()` for security
+- Proper HTTP status codes (`201` create, `204` delete)
+- Eager loading via `?with=relation1,relation2`
+- SoftDeletes: adds `restore()` and `forceDestroy()`
+
+### FormRequests
+- **Store**: rules mapped from DB types (`integer`, `string|max:255`, `nullable`, `date`)
+- **Update**: same with `sometimes` prefix for partial updates
+- Unique constraints from DB indexes included
+
+### Resource
+- All columns mapped, `JsonResource` with typed `toArray(Request $request): array`
+
+### Policy
+- Standard methods: `viewAny`, `view`, `create`, `update`, `delete`
+- `restore` / `forceDelete` when SoftDeletes detected
+- `App\Models\User`, no deprecated `HandlesAuthorization` trait
+- Auto-discovered by Laravel 11/12
+
+### Factory
+- Faker by column name (`email` → `safeEmail()`, `name` → `name()`)
+- Falls back to type-based (`integer` → `randomNumber()`)
+
+### Routes
+
+Auto-appends to `routes/api.php`:
+```php
+Route::apiResource('posts', \App\Http\Controllers\PostController::class);
+// + restore/forceDestroy routes when SoftDeletes detected
+```
+
+> **Note:** Laravel 11+ requires `php artisan install:api` before `routes/api.php` exists. If the file is missing, the generator prints the route snippet to the console instead of failing.
+
+---
+
+## Customization Guide
+
+### Stub Placeholders
+
+**Simple placeholders:**
+```
+{{ modelName }}        → Post
+{{ modelVariable }}    → post
+{{ modelNamespace }}   → App\Models
+{{ fillable }}         → ['title', 'body', ...]
+{{ validationRules }}  → ['title' => 'required|string|max:255', ...]
+```
+
+**Conditional blocks:**
+```
+{{#if softDeletes}}
+use Illuminate\Database\Eloquent\SoftDeletes;
+{{/if softDeletes}}
+```
+
+### Configuration
+
+All defaults in `config/votacrudgenerator.php`:
+
+```php
+return [
+    'namespaces' => [
+        'model'      => 'App\\Models',
+        'controller' => 'App\\Http\\Controllers',
+        'request'    => 'App\\Http\\Requests',
+        'resource'   => 'App\\Http\\Resources',
+        'policy'     => 'App\\Policies',
+    ],
+    'generate' => [
+        'model' => true, 'controller' => true,
+        'store_request' => true, 'update_request' => true,
+        'resource' => true, 'policy' => true,
+        'factory' => true, 'routes' => true,
+    ],
+    'detect' => [
+        'soft_deletes' => true, 'timestamps' => true,
+        'relationships' => true, 'casts' => true,
+    ],
+    'route_file'   => 'routes/api.php',
+    'route_prefix' => '',
+    'packages' => [
+        'spatie_query_builder' => false,
+    ],
+];
+```
+
+### Extending the Generator
+
+- **Custom validation rules**: Override `getColumnValidationRule()` in a custom `DatabaseIntrospector` bound via the service container
+- **Custom faker methods**: Override `getColumnFaker()` for project-specific patterns
+- **New file types**: Create a stub in `stubs/vendor/votacrud/` and extend `CrudGenerateCommand`
+
+---
+
+## 🤖 AI Skills / Cursor Rules
+
+If you use AI coding assistants like **Cursor**, **GitHub Copilot**, or **Antigravity**, you can train them to use `VotaCrudGenerator` instead of writing manual, error-prone CRUD boilerplate. 
+
+Because the generator extracts your **Database Column Comments** into Model PHPDocs and Resource fields, your AI will instantly understand the business context of every auto-generated field.
+
+Add the following block to your project's `.cursorrules`, GitHub Copilot instructions, or AI agent context (e.g., `skills/votacrud.md`):
+
+```markdown
+# Laravel CRUD Generation
+
+When asked to create a new CRUD, resource, or model with its related files:
+1. DO NOT write the Model, Controller, Requests, Resource, Policy, or Factory manually.
+2. Ask the user to create and run the database migration first. Ensure you add `->comment(...)` to the columns to provide business context.
+3. Once the database table is ready, use the VotaCrudGenerator package by running:
+   `php artisan vota:crud {ModelName}`
+4. The package will automatically introspect the database and generate all necessary files based on the concrete table schema (columns, types, foreign keys, soft deletes, and comments).
+5. Only make manual edits to the generated files if specific custom business logic is requested.
+```
+
+---
+
+## Multi-Database Support
+
+Works with any Laravel-supported driver via the `Schema` facade:
+
+| Database | Columns | Foreign Keys | Indexes |
+|----------|---------|-------------|---------|
+| MySQL | ✅ | ✅ | ✅ |
+| PostgreSQL | ✅ | ✅ | ✅ |
+| SQLite | ✅ | ✅ | ✅ |
+
+## Requirements
+
+- PHP 8.3+
+- Laravel 11.x or 12.x
+- Existing database with tables
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+MIT — see [LICENSE.md](LICENSE.md)

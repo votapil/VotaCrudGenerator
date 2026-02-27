@@ -1,0 +1,108 @@
+<?php
+
+namespace {{ controllerNamespace }};
+
+use App\Http\Controllers\Controller;
+use {{ modelFullClass }};
+use {{ resourceFullClass }};
+use {{ storeRequestFullClass }};
+use {{ updateRequestFullClass }};
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+
+class {{ modelName }}Controller extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $query = {{ modelName }}::query();
+
+        if ($request->has('sort')) {
+            $query->orderBy(
+                $request->input('sort', 'id'),
+                $request->input('direction', 'asc')
+            );
+        }
+{{#if hasRelationships}}
+
+        if ($request->has('with')) {
+            $query->with(explode(',', $request->input('with')));
+        }
+
+        if ($request->has('with_count')) {
+            $query->withCount(explode(',', $request->input('with_count')));
+        }
+{{/if hasRelationships}}
+
+        return {{ modelName }}Resource::collection(
+            $query->paginate($request->input('per_page', 20))
+        );
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store({{ modelName }}StoreRequest $request): JsonResponse
+    {
+        ${{ modelVariable }} = {{ modelName }}::create($request->validated());
+
+        return (new {{ modelName }}Resource(${{ modelVariable }}))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show({{ modelName }} ${{ modelVariable }}): {{ modelName }}Resource
+    {
+        return new {{ modelName }}Resource(${{ modelVariable }});
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update({{ modelName }}UpdateRequest $request, {{ modelName }} ${{ modelVariable }}): {{ modelName }}Resource
+    {
+        ${{ modelVariable }}->update($request->validated());
+
+        return new {{ modelName }}Resource(${{ modelVariable }});
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy({{ modelName }} ${{ modelVariable }}): JsonResponse
+    {
+        ${{ modelVariable }}->delete();
+
+        return response()->json(null, 204);
+    }
+{{#if softDeletes}}
+
+    /**
+     * Restore the specified soft-deleted resource.
+     */
+    public function restore(int $id): {{ modelName }}Resource
+    {
+        ${{ modelVariable }} = {{ modelName }}::onlyTrashed()->findOrFail($id);
+        ${{ modelVariable }}->restore();
+
+        return new {{ modelName }}Resource(${{ modelVariable }});
+    }
+
+    /**
+     * Permanently delete the specified resource.
+     */
+    public function forceDestroy(int $id): JsonResponse
+    {
+        ${{ modelVariable }} = {{ modelName }}::onlyTrashed()->findOrFail($id);
+        ${{ modelVariable }}->forceDelete();
+
+        return response()->json(null, 204);
+    }
+{{/if softDeletes}}
+}
