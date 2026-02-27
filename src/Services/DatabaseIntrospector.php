@@ -190,8 +190,16 @@ class DatabaseIntrospector
         }
 
         $typeName = strtolower($column['type_name'] ?? $column['type'] ?? 'string');
+        $name = strtolower($column['name'] ?? '');
+
+        $isBoolean = str_contains($typeName, 'bool')
+            || str_contains($typeName, 'tinyint(1)')
+            || str_starts_with($name, 'is_')
+            || str_starts_with($name, 'has_')
+            || str_starts_with($name, 'can_');
 
         $rules[] = match (true) {
+            $isBoolean => 'boolean',
             str_contains($typeName, 'int') => 'integer',
             str_contains($typeName, 'decimal'),
             str_contains($typeName, 'float'),
@@ -224,9 +232,16 @@ class DatabaseIntrospector
     public function getColumnCast(array $column): ?string
     {
         $typeName = strtolower($column['type_name'] ?? $column['type'] ?? 'string');
+        $name = strtolower($column['name'] ?? '');
+
+        $isBoolean = str_contains($typeName, 'bool')
+            || str_contains($typeName, 'tinyint(1)')
+            || str_starts_with($name, 'is_')
+            || str_starts_with($name, 'has_')
+            || str_starts_with($name, 'can_');
 
         return match (true) {
-            str_contains($typeName, 'bool') => 'boolean',
+            $isBoolean => 'boolean',
             str_contains($typeName, 'json'),
             str_contains($typeName, 'jsonb') => 'array',
             str_contains($typeName, 'decimal'),
