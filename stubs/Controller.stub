@@ -10,6 +10,9 @@ use {{ updateRequestFullClass }};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+{{#if spatieQueryBuilder}}
+use Spatie\QueryBuilder\QueryBuilder;
+{{/if spatieQueryBuilder}}
 
 class {{ modelName }}Controller extends Controller
 {
@@ -18,6 +21,17 @@ class {{ modelName }}Controller extends Controller
      */
     public function index(Request $request): AnonymousResourceCollection
     {
+{{#if spatieQueryBuilder}}
+        ${{ modelPluralLower }} = QueryBuilder::for({{ modelName }}::class)
+            ->allowedFilters({{ allowedFilters }})
+            ->allowedSorts({{ allowedSorts }})
+{{#if hasRelationships}}
+            ->allowedIncludes({{ allowedIncludes }})
+{{/if hasRelationships}}
+            ->paginate($request->input('per_page', 20));
+
+        return {{ modelName }}Resource::collection(${{ modelPluralLower }});
+{{else}}
         $query = {{ modelName }}::query();
 
         if ($request->has('sort')) {
@@ -40,6 +54,7 @@ class {{ modelName }}Controller extends Controller
         return {{ modelName }}Resource::collection(
             $query->paginate($request->input('per_page', 20))
         );
+{{/if spatieQueryBuilder}}
     }
 
     /**

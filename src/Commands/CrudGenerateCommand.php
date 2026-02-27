@@ -274,7 +274,7 @@ class CrudGenerateCommand extends Command
 
         if (count($meta['casts']) > 0) {
             $this->line('<fg=magenta>🎯 Casts:</> ' . implode(', ', array_map(
-                fn ($k, $v) => "{$k} → {$v}",
+                fn($k, $v) => "{$k} → {$v}",
                 array_keys($meta['casts']),
                 $meta['casts']
             )));
@@ -325,16 +325,41 @@ class CrudGenerateCommand extends Command
 
     protected function generateController(array $meta, bool $force): void
     {
+        $sqb = config('votacrudgenerator.packages.spatie_query_builder', false);
+
+        $allowedFiltersStr = '';
+        $allowedSortsStr = '';
+        $allowedIncludesStr = '';
+
+        if ($sqb) {
+            $columnNames = array_column($meta['columns'], 'name');
+            $allowedFiltersStr = ltrim($this->formatArrayMultiline($columnNames, 16));
+            $allowedSortsStr = ltrim($this->formatArrayMultiline($columnNames, 16));
+
+            $includes = array_merge(
+                array_column($meta['belongsTo'], 'method'),
+                array_column($meta['hasMany'], 'method')
+            );
+            $allowedIncludesStr = count($includes) > 0
+                ? ltrim($this->formatArrayMultiline($includes, 16))
+                : '[]';
+        }
+
         $content = $this->renderer->render('Controller', [
             'controllerNamespace' => $meta['controllerNamespace'],
             'modelName' => $meta['modelName'],
             'modelVariable' => $meta['modelVariable'],
+            'modelPluralLower' => $meta['modelPluralLower'],
             'modelFullClass' => $meta['modelFullClass'],
             'resourceFullClass' => $meta['resourceFullClass'],
             'storeRequestFullClass' => $meta['storeRequestFullClass'],
             'updateRequestFullClass' => $meta['updateRequestFullClass'],
             'softDeletes' => $meta['softDeletes'],
             'hasRelationships' => $meta['hasRelationships'],
+            'spatieQueryBuilder' => $sqb,
+            'allowedFilters' => $allowedFiltersStr,
+            'allowedSorts' => $allowedSortsStr,
+            'allowedIncludes' => $allowedIncludesStr,
         ]);
 
         $filePath = $this->namespacePath($meta['controllerNamespace'], $meta['modelName'] . 'Controller');
@@ -348,7 +373,7 @@ class CrudGenerateCommand extends Command
         $className = $meta['modelName'] . $type . 'Request';
 
         $rulesStr = $this->formatAssocArrayMultiline(
-            array_map(fn ($rule) => "'{$rule}'", $rules),
+            array_map(fn($rule) => "'{$rule}'", $rules),
             12,
             false
         );
@@ -571,7 +596,7 @@ PHP;
         }
 
         $pad = str_repeat(' ', $indent);
-        $lines = array_map(fn ($item) => "{$pad}'{$item}',", $items);
+        $lines = array_map(fn($item) => "{$pad}'{$item}',", $items);
 
         return "[\n" . implode("\n", $lines) . "\n" . str_repeat(' ', $indent - 4) . ']';
     }
