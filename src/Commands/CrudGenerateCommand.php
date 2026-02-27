@@ -274,7 +274,7 @@ class CrudGenerateCommand extends Command
 
         if (count($meta['casts']) > 0) {
             $this->line('<fg=magenta>🎯 Casts:</> ' . implode(', ', array_map(
-                fn ($k, $v) => "{$k} → {$v}",
+                fn($k, $v) => "{$k} → {$v}",
                 array_keys($meta['casts']),
                 $meta['casts']
             )));
@@ -348,7 +348,7 @@ class CrudGenerateCommand extends Command
         $className = $meta['modelName'] . $type . 'Request';
 
         $rulesStr = $this->formatAssocArrayMultiline(
-            array_map(fn ($rule) => "'{$rule}'", $rules),
+            array_map(fn($rule) => "'{$rule}'", $rules),
             12,
             false
         );
@@ -506,10 +506,7 @@ PHP;
         $name = strtolower($column['name'] ?? '');
 
         $isBoolean = str_contains($typeName, 'bool')
-            || str_contains($typeName, 'tinyint(1)')
-            || str_starts_with($name, 'is_')
-            || str_starts_with($name, 'has_')
-            || str_starts_with($name, 'can_');
+            || str_contains($typeName, 'tinyint(1)');
 
         return match (true) {
             $isBoolean => 'bool',
@@ -574,7 +571,7 @@ PHP;
         }
 
         $pad = str_repeat(' ', $indent);
-        $lines = array_map(fn ($item) => "{$pad}'{$item}',", $items);
+        $lines = array_map(fn($item) => "{$pad}'{$item}',", $items);
 
         return "[\n" . implode("\n", $lines) . "\n" . str_repeat(' ', $indent - 4) . ']';
     }
