@@ -12,4 +12,6 @@ namespace Votapil\VotaCrudGenerator;
  * @see \Votapil\VotaCrudGenerator\Commands\CrudGenerateCommand
  * @see \Votapil\VotaCrudGenerator\Commands\CrudStubPublishCommand
  */
-class VotaCrudGenerator {}
+class VotaCrudGenerator
+{
+}
