@@ -20,7 +20,8 @@ class CrudGenerateCommand extends Command
         {--no-resource : Skip Resource generation}
         {--no-factory : Skip Factory generation}
         {--no-route : Skip route injection}
-        {--force : Overwrite existing files}';
+        {--force : Overwrite existing files}
+        {--yes : Skip confirmation prompt}';
 
     protected $description = 'Generate CRUD files (Model, Controller, Requests, Resource, Policy, Factory) from database table schema';
 
@@ -58,7 +59,7 @@ class CrudGenerateCommand extends Command
 
         $this->displayMetaSummary($meta);
 
-        if (!$this->confirm('Proceed with generation?', true)) {
+        if (!$this->option('yes') && !$this->confirm('Proceed with generation?', true)) {
             $this->warn('Aborted.');
 
             return self::SUCCESS;

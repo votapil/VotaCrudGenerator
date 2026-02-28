@@ -31,7 +31,8 @@ class {{ modelName }}Controller extends Controller
             ->paginate($request->input('per_page', 20));
 
         return {{ modelName }}Resource::collection(${{ modelPluralLower }});
-{{else}}
+{{/if spatieQueryBuilder}}
+{{#unless spatieQueryBuilder}}
         $query = {{ modelName }}::query();
 
         if ($request->has('sort')) {
@@ -54,7 +55,7 @@ class {{ modelName }}Controller extends Controller
         return {{ modelName }}Resource::collection(
             $query->paginate($request->input('per_page', 20))
         );
-{{/if spatieQueryBuilder}}
+{{/unless spatieQueryBuilder}}
     }
 
     /**
