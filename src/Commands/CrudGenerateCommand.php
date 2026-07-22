@@ -331,11 +331,21 @@ class CrudGenerateCommand extends Command
         $allowedFiltersStr = '';
         $allowedSortsStr = '';
         $allowedIncludesStr = '';
+        $usesAllowedFilter = false;
 
         if ($sqb) {
             $columnNames = array_column($meta['columns'], 'name');
-            $allowedFiltersStr = ltrim($this->formatArrayMultiline($columnNames, 16));
+            $allowedFiltersStr = ltrim($this->formatAllowedFilters($meta['columns'], 16));
             $allowedSortsStr = ltrim($this->formatArrayMultiline($columnNames, 16));
+
+            // Non-text columns are emitted as AllowedFilter::exact(); the controller
+            // then needs the AllowedFilter import.
+            foreach ($meta['columns'] as $column) {
+                if (! $this->isTextColumn($column)) {
+                    $usesAllowedFilter = true;
+                    break;
+                }
+            }
 
             $includes = array_merge(
                 array_column($meta['belongsTo'], 'method'),
@@ -358,6 +368,7 @@ class CrudGenerateCommand extends Command
             'softDeletes' => $meta['softDeletes'],
             'hasRelationships' => $meta['hasRelationships'],
             'spatieQueryBuilder' => $sqb,
+            'usesAllowedFilter' => $usesAllowedFilter,
             'allowedFilters' => $allowedFiltersStr,
             'allowedSorts' => $allowedSortsStr,
             'allowedIncludes' => $allowedIncludesStr,
@@ -600,6 +611,51 @@ PHP;
         $lines = array_map(fn ($item) => "{$pad}'{$item}',", $items);
 
         return "[\n" . implode("\n", $lines) . "\n" . str_repeat(' ', $indent - 4) . ']';
+    }
+
+    /**
+     * Build the allowedFilters() array from column metadata.
+     *
+     * Non-text columns become AllowedFilter::exact(): a plain-string filter
+     * compiles to `LOWER(col) LIKE %val%`, which the database rejects on
+     * integer/boolean/date columns (Postgres: "function lower(bigint) does
+     * not exist"). Text columns stay partial (plain string) so case-insensitive
+     * fuzzy search keeps working.
+     *
+     * @param  array<int, array<string, mixed>>  $columns
+     */
+    protected function formatAllowedFilters(array $columns, int $indent): string
+    {
+        if (empty($columns)) {
+            return '[]';
+        }
+
+        $pad = str_repeat(' ', $indent);
+        $lines = array_map(function (array $column) use ($pad) {
+            $name = $column['name'];
+
+            return $this->isTextColumn($column)
+                ? "{$pad}'{$name}',"
+                : "{$pad}AllowedFilter::exact('{$name}'),";
+        }, $columns);
+
+        return "[\n" . implode("\n", $lines) . "\n" . str_repeat(' ', $indent - 4) . ']';
+    }
+
+    /**
+     * Whether a column holds text (char/varchar/text/enum) and is therefore
+     * safe for a case-insensitive partial (LIKE) filter.
+     *
+     * @param  array<string, mixed>  $column
+     */
+    protected function isTextColumn(array $column): bool
+    {
+        $typeName = strtolower($column['type_name'] ?? $column['type'] ?? 'string');
+
+        return str_contains($typeName, 'char')
+            || str_contains($typeName, 'text')
+            || str_contains($typeName, 'string')
+            || str_contains($typeName, 'enum');
     }
 
     /**
