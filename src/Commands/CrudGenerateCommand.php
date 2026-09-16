@@ -552,7 +552,6 @@ PHP;
             str_contains($typeName, 'float'),
             str_contains($typeName, 'double'),
             str_contains($typeName, 'numeric') => 'float',
-            str_contains($typeName, 'bool') => 'bool',
             str_contains($typeName, 'json') => 'array',
             str_contains($typeName, 'date'),
             str_contains($typeName, 'timestamp') => '\Illuminate\Support\Carbon',

@@ -205,7 +205,6 @@ class DatabaseIntrospector
             str_contains($typeName, 'float'),
             str_contains($typeName, 'double'),
             str_contains($typeName, 'numeric') => 'numeric',
-            str_contains($typeName, 'bool') => 'boolean',
             str_contains($typeName, 'date'),
             str_contains($typeName, 'timestamp') => 'date',
             str_contains($typeName, 'json'),
