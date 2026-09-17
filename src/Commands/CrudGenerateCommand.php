@@ -2,6 +2,7 @@
 
 namespace Votapil\VotaCrudGenerator\Commands;
 
+use Composer\InstalledVersions;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -335,8 +336,8 @@ class CrudGenerateCommand extends Command
 
         if ($sqb) {
             $columnNames = array_column($meta['columns'], 'name');
-            $allowedFiltersStr = ltrim($this->formatAllowedFilters($meta['columns'], 16));
-            $allowedSortsStr = ltrim($this->formatArrayMultiline($columnNames, 16));
+            $allowedFiltersStr = $this->asQueryBuilderArguments(ltrim($this->formatAllowedFilters($meta['columns'], 16)));
+            $allowedSortsStr = $this->asQueryBuilderArguments(ltrim($this->formatArrayMultiline($columnNames, 16)));
 
             // Non-text columns are emitted as AllowedFilter::exact(); the controller
             // then needs the AllowedFilter import.
@@ -351,9 +352,11 @@ class CrudGenerateCommand extends Command
                 array_column($meta['belongsTo'], 'method'),
                 array_column($meta['hasMany'], 'method')
             );
-            $allowedIncludesStr = count($includes) > 0
-                ? ltrim($this->formatArrayMultiline($includes, 16))
-                : '[]';
+            $allowedIncludesStr = $this->asQueryBuilderArguments(
+                count($includes) > 0
+                    ? ltrim($this->formatArrayMultiline($includes, 16))
+                    : '[]'
+            );
         }
 
         $content = $this->renderer->render('Controller', [
@@ -595,6 +598,46 @@ PHP;
 
         File::put($path, $content);
         $this->info("✅ {$label} created: {$path}");
+    }
+
+    /**
+     * Shape a formatted list for `allowedFilters()` / `allowedSorts()` / `allowedIncludes()`.
+     *
+     * spatie/laravel-query-builder 7 made those methods variadic instead of array-taking, so
+     * a controller generated with the v6 form answers 500 on every list request:
+     * `allowedSorts(): Argument #1 must be of type AllowedSort|string, array given`. This
+     * generator supports Laravel 11 through 13, which spans both query-builder majors, so
+     * the version installed in the target application decides the shape.
+     */
+    protected function asQueryBuilderArguments(string $formattedList): string
+    {
+        if (! self::queryBuilderIsVariadic(
+            InstalledVersions::isInstalled('spatie/laravel-query-builder')
+                ? InstalledVersions::getVersion('spatie/laravel-query-builder')
+                : null
+        )) {
+            return $formattedList;
+        }
+
+        // '[]' becomes an empty argument list; otherwise drop the enclosing brackets and
+        // keep the formatting, so the generated call reads exactly like a hand-written one.
+        return $formattedList === '[]' ? '' : substr($formattedList, 1, -1);
+    }
+
+    /**
+     * Whether the installed query-builder takes variadic arguments (v7+).
+     *
+     * A null version means the package is absent — nothing to be compatible with, so the
+     * current major wins. So does a non-numeric version such as `dev-main`: a branch install
+     * is tracking the newest code, not an old release.
+     */
+    public static function queryBuilderIsVariadic(?string $installedVersion): bool
+    {
+        if ($installedVersion === null || ! ctype_digit($installedVersion[0] ?? '')) {
+            return true;
+        }
+
+        return ((int) $installedVersion) >= 7;
     }
 
     /**
