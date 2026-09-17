@@ -18,3 +18,7 @@
 /UPGRADING.md       export-ignore
 /phpstan.neon.dist  export-ignore
 /phpstan-baseline.neon  export-ignore
+
+# Stubs are copied verbatim into the host app. CRLF here means every generated
+# file lands with CRLF on a project that uses LF.
+*.stub              text eol=lf

@@ -196,8 +196,18 @@ class CrudGenerateCommand extends Command
         $baseResourceNs = $config['namespaces']['resource'] ?? 'App\\Http\\Resources';
         $resourceNamespace = $baseResourceNs . $subPath;
 
+        // Policies and factories take the sub-path like everything else. They used
+        // not to, and that was not a cosmetic difference: --path=Admin put
+        // App\Models\Admin\Post's factory at Database\Factories\PostFactory, where
+        // Laravel does not look for it (resolveFactoryName strips App\Models\ and
+        // keeps the rest, so it wants Database\Factories\Admin\PostFactory) — and
+        // where it collides with the root App\Models\Post's own factory, which
+        // --force then overwrites without a word.
         $basePolicyNs = $config['namespaces']['policy'] ?? 'App\\Policies';
-        $policyNamespace = $basePolicyNs;
+        $policyNamespace = $basePolicyNs . $subPath;
+
+        $baseFactoryNs = $config['namespaces']['factory'] ?? 'Database\\Factories';
+        $factoryNamespace = $baseFactoryNs . $subPath;
 
         $modelVariable = Str::camel($name);
         $modelPluralLower = Str::lower(Str::plural($name));
@@ -206,6 +216,7 @@ class CrudGenerateCommand extends Command
             'modelName' => $name,
             'tableName' => $tableName,
             'path' => $path,
+            'subPath' => $subPath,
 
             // Namespaces
             'modelNamespace' => $modelNamespace,
@@ -214,6 +225,7 @@ class CrudGenerateCommand extends Command
             'requestNamespace' => $requestNamespace,
             'resourceNamespace' => $resourceNamespace,
             'policyNamespace' => $policyNamespace,
+            'factoryNamespace' => $factoryNamespace,
 
             // Resource & Request full classes (for controller imports)
             'resourceFullClass' => $resourceNamespace . '\\' . $name . 'Resource',
@@ -454,12 +466,13 @@ class CrudGenerateCommand extends Command
         );
 
         $content = $this->renderer->render('Factory', [
+            'factoryNamespace' => $meta['factoryNamespace'],
             'modelFullClass' => $meta['modelFullClass'],
             'modelName' => $meta['modelName'],
             'factoryFields' => $fakerStr,
         ]);
 
-        $filePath = database_path('factories/' . $meta['modelName'] . 'Factory.php');
+        $filePath = database_path(self::factoryRelativePath($meta['subPath'], $meta['modelName']));
         $this->writeFile($filePath, $content, $force, 'Factory');
     }
 
@@ -560,6 +573,23 @@ PHP;
             str_contains($typeName, 'timestamp') => '\Illuminate\Support\Carbon',
             default => 'string',
         };
+    }
+
+    /**
+     * Where a factory goes, relative to database/.
+     *
+     * Not derived through namespacePath() like the others: composer maps
+     * Database\Factories\ to database/factories/ with a lower-case f, and deriving
+     * the directory from the namespace yields "Factories", which the autoloader
+     * ignores on a case-sensitive filesystem.
+     *
+     * @param  string  $subPath  Leading-backslash sub-namespace, e.g. '\Admin', or ''
+     */
+    public static function factoryRelativePath(string $subPath, string $modelName): string
+    {
+        $dir = trim(str_replace('\\', '/', $subPath), '/');
+
+        return 'factories/'.($dir === '' ? '' : $dir.'/').$modelName.'Factory.php';
     }
 
     /**
