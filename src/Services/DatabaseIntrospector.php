@@ -131,7 +131,7 @@ class DatabaseIntrospector
             ];
         }
 
-        return $relationships;
+        return self::disambiguateMethodNames($relationships);
     }
 
     /**
@@ -173,7 +173,57 @@ class DatabaseIntrospector
             }
         }
 
-        return $relationships;
+        return self::disambiguateMethodNames($relationships);
+    }
+
+    /**
+     * Give every relationship a method name of its own.
+     *
+     * A reverse relationship is named after the other table, so a table that points here
+     * through several foreign keys — transactions.currency_code, .base_currency_code and
+     * .to_currency_code all reference currencies — produced three methods called
+     * transactions(). The generated model then died on `Cannot redeclare`, and the same
+     * name appeared three times in allowedIncludes().
+     *
+     * When a name is claimed once it stays plain. When it is claimed more than once, every
+     * claimant carries its foreign key: transactionsByCurrencyCode,
+     * transactionsByBaseCurrencyCode, transactionsByToCurrencyCode. Suffixing all of them
+     * rather than all-but-the-first keeps the result independent of the order the schema
+     * happens to be read in.
+     *
+     * @param  array<int, array<string, mixed>>  $relationships
+     * @return array<int, array<string, mixed>>
+     */
+    public static function disambiguateMethodNames(array $relationships): array
+    {
+        $grouped = [];
+
+        foreach ($relationships as $relationship) {
+            $grouped[$relationship['method']][] = $relationship;
+        }
+
+        $result = [];
+        $taken = [];
+
+        foreach ($grouped as $method => $group) {
+            foreach ($group as $relationship) {
+                if (count($group) > 1) {
+                    $relationship['method'] = $method.'By'.Str::studly((string) $relationship['foreign_key']);
+                }
+
+                // Two foreign keys cannot share a column inside one table, so a clash here
+                // means a suffixed name met an unrelated plain one. Drop the later of the
+                // two: a missing relationship is recoverable, a fatal parse error is not.
+                if (isset($taken[$relationship['method']])) {
+                    continue;
+                }
+
+                $taken[$relationship['method']] = true;
+                $result[] = $relationship;
+            }
+        }
+
+        return $result;
     }
 
     /**

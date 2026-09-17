@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\File;
 
 class StubRenderer
 {
+    /** Deepest nesting of conditional blocks a stub may use. */
+    protected const MAX_CONDITIONAL_PASSES = 10;
+
     /**
      * Render a stub file by replacing placeholders.
      *
@@ -113,7 +116,31 @@ class StubRenderer
      */
     protected function processConditionals(string $content, array $variables): string
     {
-        // Process #if blocks
+        // One pass resolves only the outermost level. preg_replace_callback never re-scans
+        // what it substituted, so a block nested inside another — which the Controller stub
+        // does, {{#if hasRelationships}} living inside {{#if spatieQueryBuilder}} — came
+        // through as a literal and the generated file did not parse. Repeat until the
+        // content stops changing; the bound is there so a malformed stub cannot spin.
+        for ($pass = 0; $pass < self::MAX_CONDITIONAL_PASSES; $pass++) {
+            $processed = $this->processConditionalPass($content, $variables);
+
+            if ($processed === $content) {
+                return $content;
+            }
+
+            $content = $processed;
+        }
+
+        return $content;
+    }
+
+    /**
+     * Resolve one level of {{#if}} / {{#unless}} blocks.
+     *
+     * @param  array<string, mixed>  $variables
+     */
+    protected function processConditionalPass(string $content, array $variables): string
+    {
         $content = preg_replace_callback(
             '/\{\{#if\s+(\w+)\}\}(.*?)\{\{\/if\s+\1\}\}/s',
             function ($matches) use ($variables) {
@@ -125,8 +152,7 @@ class StubRenderer
             $content
         );
 
-        // Process #unless blocks
-        $content = preg_replace_callback(
+        return preg_replace_callback(
             '/\{\{#unless\s+(\w+)\}\}(.*?)\{\{\/unless\s+\1\}\}/s',
             function ($matches) use ($variables) {
                 $varName = $matches[1];
@@ -136,8 +162,6 @@ class StubRenderer
             },
             $content
         );
-
-        return $content;
     }
 
     /**
